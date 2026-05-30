@@ -14,7 +14,7 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
 
 // TỪ KHÓA BÍ MẬT CỦA GROQ AI
-const GROQ_API_KEY = "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"; 
+const apiKey = process.env.GROQ_API_KEY; 
 
 let ecoIdeal = { temp_min: 25, temp_max: 28, humi_min: 80, humi_max: 95, air_max: 600 };
 let lastEcoData = { t: 0, h: 0, a: 0 };
