@@ -91,3 +91,45 @@ async function analyzeDataWithAI() {
         console.error("❌ LỖI KẾT NỐI AI:", e.message);
     }
 }
+// ==========================================
+// 5. LẮNG NGHE LỆNH THỦ CÔNG TỪ TRÌNH DUYỆT WEB
+// ==========================================
+
+// Nghe nút "CHẠY AI PHÂN TÍCH"
+db.ref("controls/ai_request").on("value", (snap) => {
+    if(snap.exists() && snap.val() > 0) {
+        console.log("🔥 Nhận lệnh chạy AI thủ công từ Web!");
+        analyzeDataWithAI(); // Gọi lại chính cái hàm AI cứu hộ ở trên
+        db.ref("controls/ai_request").set(0); // Reset lệnh
+    }
+});
+
+// Nghe nút "LƯU THÔNG TIN NẤM"
+db.ref("config/mushroom").on("value", async (snap) => {
+    if(snap.exists()) {
+        let data = snap.val();
+        // Nếu thấy có yêu cầu tra cứu mới (chưa xử lý)
+        if(data.request_ai && data.request_ai !== data.last_processed) {
+            console.log(`🍄 AI Đám mây đang phân tích nấm: ${data.name}`);
+            
+            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+            const promptText = `Nấm: "${data.name}". Cung cấp bảng điều kiện tối ưu (Nhiệt độ, Độ ẩm, Khí) cực ngắn gọn bằng HTML.`;
+            
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST", headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", temperature: 0.1, messages: [{ role: "user", content: promptText }] })
+                });
+                const resData = await response.json();
+                if (resData.choices) {
+                    // Xử lý xong, ném kết quả lại lên Firebase cho Web nó đọc
+                    db.ref("config/mushroom").update({ 
+                        info: resData.choices[0].message.content,
+                        last_processed: data.request_ai // Đánh dấu là đã xử lý xong
+                    });
+                    console.log(`✅ Đã cập nhật xong thông tin nấm: ${data.name}`);
+                }
+            } catch (e) { console.error("❌ Lỗi AI tra nấm:", e.message); }
+        }
+    }
+});
