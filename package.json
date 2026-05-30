@@ -1,0 +1,13 @@
+{
+  "name": "ai-scada",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "firebase": "8.10.1",
+    "node-fetch": "^3.3.2"
+  }
+}
